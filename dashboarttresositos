@@ -1,0 +1,412 @@
+import { useState, useEffect } from 'react';
+import { LineChart, BarChart, Bar, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { TrendingUp, Users, Heart, Globe, Award, Palette, RotateCcw } from 'lucide-react';
+
+export default function Dashboard() {
+  // Datos de ejemplo para el dashboard
+  const [datos, setDatos] = useState({
+    inscripciones: {
+      crecimientoActual: 12,
+      meta: 15,
+      historico: [
+        { mes: 'Ene', valor: 5 },
+        { mes: 'Feb', valor: 7 },
+        { mes: 'Mar', valor: 9 },
+        { mes: 'Abr', valor: 11 },
+        { mes: 'May', valor: 12 }
+      ]
+    },
+    satisfaccion: {
+      indiceActual: 82,
+      meta: 85,
+      historico: [
+        { mes: 'Ene', valor: 75 },
+        { mes: 'Feb', valor: 78 },
+        { mes: 'Mar', valor: 80 },
+        { mes: 'Abr', valor: 81 },
+        { mes: 'May', valor: 82 }
+      ]
+    },
+    visibilidadDigital: {
+      seguidores: {
+        aumentoActual: 22,
+        meta: 30,
+        historico: [
+          { mes: 'Ene', valor: 5 },
+          { mes: 'Feb', valor: 10 },
+          { mes: 'Mar', valor: 15 },
+          { mes: 'Abr', valor: 18 },
+          { mes: 'May', valor: 22 }
+        ]
+      },
+      visitasWeb: {
+        aumentoActual: 25,
+        meta: 30,
+        historico: [
+          { mes: 'Ene', valor: 8 },
+          { mes: 'Feb', valor: 12 },
+          { mes: 'Mar', valor: 17 },
+          { mes: 'Abr', valor: 21 },
+          { mes: 'May', valor: 25 }
+        ]
+      }
+    },
+    acreditacion: {
+      mencionesActual: 85,
+      meta: 100,
+      porCategoria: [
+        { categoria: 'Web', porcentaje: 100 },
+        { categoria: 'Redes', porcentaje: 90 },
+        { categoria: 'Folletos', porcentaje: 80 },
+        { categoria: 'Anuncios', porcentaje: 70 }
+      ]
+    },
+    programasArtisticos: {
+      actividadesMensuales: 3,
+      meta: 4,
+      porcentajeInclusivos: 65,
+      metaInclusivos: 75,
+      historico: [
+        { mes: 'Ene', actividades: 2, inclusivos: 50 },
+        { mes: 'Feb', actividades: 2, inclusivos: 55 },
+        { mes: 'Mar', actividades: 3, inclusivos: 60 },
+        { mes: 'Abr', actividades: 3, inclusivos: 62 },
+        { mes: 'May', actividades: 3, inclusivos: 65 }
+      ]
+    },
+    retencion: {
+      tasaActual: 78,
+      meta: 80,
+      historico: [
+        { mes: 'Ene', valor: 75 },
+        { mes: 'Feb', valor: 75 },
+        { mes: 'Mar', valor: 76 },
+        { mes: 'Abr', valor: 77 },
+        { mes: 'May', valor: 78 }
+      ]
+    }
+  });
+
+  // Función para calcular el estado de un KPI
+  const calcularEstadoKPI = (actual, meta) => {
+    const porcentaje = (actual / meta) * 100;
+    if (porcentaje >= 90) return 'bg-green-500';
+    if (porcentaje >= 75) return 'bg-yellow-500';
+    return 'bg-red-500';
+  };
+
+  // Componente de tacómetro para visualizar progreso
+  const Tacometro = ({ valor, meta, titulo, icono }) => {
+    const porcentaje = Math.min((valor / meta) * 100, 100);
+    const colorClase = porcentaje >= 90 ? 'text-green-500' : porcentaje >= 75 ? 'text-yellow-500' : 'text-red-500';
+    
+    return (
+      <div className="bg-white p-4 rounded-lg shadow-md">
+        <div className="flex items-center justify-between mb-2">
+          <h3 className="font-bold">{titulo}</h3>
+          <div className={colorClase}>{icono}</div>
+        </div>
+        <div className="flex justify-center my-2">
+          <div className="text-4xl font-bold">{valor}%</div>
+          <div className="text-gray-500 ml-2 mt-2">de {meta}%</div>
+        </div>
+        <div className="w-full bg-gray-200 rounded-full h-4">
+          <div
+            className={`h-4 rounded-full ${porcentaje >= 90 ? 'bg-green-500' : porcentaje >= 75 ? 'bg-yellow-500' : 'bg-red-500'}`}
+            style={{ width: `${porcentaje}%` }}
+          ></div>
+        </div>
+      </div>
+    );
+  };
+
+  // Componente para mostrar valor numérico con objetivo
+  const ValorNumerico = ({ valor, meta, titulo, icono }) => {
+    const colorClase = valor >= meta ? 'text-green-500' : valor >= meta * 0.75 ? 'text-yellow-500' : 'text-red-500';
+    
+    return (
+      <div className="bg-white p-4 rounded-lg shadow-md">
+        <div className="flex items-center justify-between mb-2">
+          <h3 className="font-bold">{titulo}</h3>
+          <div className={colorClase}>{icono}</div>
+        </div>
+        <div className="flex items-end">
+          <div className="text-4xl font-bold">{valor}</div>
+          <div className="text-gray-500 ml-2 mb-1">/ {meta} meta</div>
+        </div>
+      </div>
+    );
+  };
+
+  return (
+    <div className="min-h-screen bg-gray-100 p-6">
+      <header className="mb-8 text-center">
+        <h1 className="text-3xl font-bold text-blue-800">
+          Campaña de Posicionamiento - Centro Infantil Tres Ositos
+        </h1>
+        <p className="text-gray-600 mt-2">Dashboard de Monitoreo de KPIs</p>
+      </header>
+
+      {/* Resumen de estado general */}
+      <div className="bg-white rounded-lg shadow-md p-4 mb-6">
+        <h2 className="text-xl font-bold mb-4">Resumen General</h2>
+        <div className="grid grid-cols-3 gap-4">
+          <div className="flex items-center">
+            <div className="w-4 h-4 rounded-full bg-green-500 mr-2"></div>
+            <div>KPIs Logrados: 2</div>
+          </div>
+          <div className="flex items-center">
+            <div className="w-4 h-4 rounded-full bg-yellow-500 mr-2"></div>
+            <div>KPIs En Progreso: 3</div>
+          </div>
+          <div className="flex items-center">
+            <div className="w-4 h-4 rounded-full bg-red-500 mr-2"></div>
+            <div>KPIs En Riesgo: 1</div>
+          </div>
+        </div>
+      </div>
+
+      {/* Primera fila de KPIs */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
+        {/* Inscripciones */}
+        <Tacometro 
+          valor={datos.inscripciones.crecimientoActual} 
+          meta={datos.inscripciones.meta} 
+          titulo="Crecimiento en Inscripciones" 
+          icono={<TrendingUp size={20} />} 
+        />
+        
+        {/* Satisfacción */}
+        <Tacometro 
+          valor={datos.satisfaccion.indiceActual} 
+          meta={datos.satisfaccion.meta} 
+          titulo="Índice de Satisfacción de Padres" 
+          icono={<Heart size={20} />} 
+        />
+        
+        {/* Retención */}
+        <Tacometro 
+          valor={datos.retencion.tasaActual} 
+          meta={datos.retencion.meta} 
+          titulo="Tasa de Retención Anual" 
+          icono={<RotateCcw size={20} />} 
+        />
+      </div>
+
+      {/* Gráfico de tendencias de inscripciones */}
+      <div className="bg-white rounded-lg shadow-md p-4 mb-6">
+        <h2 className="text-xl font-bold mb-4">Tendencia de Inscripciones</h2>
+        <ResponsiveContainer width="100%" height={300}>
+          <LineChart data={datos.inscripciones.historico}>
+            <CartesianGrid strokeDasharray="3 3" />
+            <XAxis dataKey="mes" />
+            <YAxis />
+            <Tooltip />
+            <Legend />
+            <Line type="monotone" dataKey="valor" stroke="#3b82f6" name="% Crecimiento" />
+            <Line type="monotone" dataKey="meta" stroke="#10b981" name="Meta" dot={false} />
+          </LineChart>
+        </ResponsiveContainer>
+      </div>
+
+      {/* Segunda fila de KPIs */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+        {/* Visibilidad Digital */}
+        <div className="bg-white rounded-lg shadow-md p-4">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl font-bold">Visibilidad Digital</h2>
+            <Globe size={20} className="text-blue-500" />
+          </div>
+          <div className="space-y-6">
+            <div>
+              <div className="flex justify-between mb-1">
+                <span>Aumento de Seguidores</span>
+                <span className={calcularEstadoKPI(datos.visibilidadDigital.seguidores.aumentoActual, datos.visibilidadDigital.seguidores.meta) === 'bg-green-500' ? 'text-green-500' : 'text-yellow-500'}>
+                  {datos.visibilidadDigital.seguidores.aumentoActual}% de {datos.visibilidadDigital.seguidores.meta}%
+                </span>
+              </div>
+              <div className="w-full bg-gray-200 rounded-full h-2">
+                <div
+                  className={calcularEstadoKPI(datos.visibilidadDigital.seguidores.aumentoActual, datos.visibilidadDigital.seguidores.meta)}
+                  style={{ width: `${(datos.visibilidadDigital.seguidores.aumentoActual / datos.visibilidadDigital.seguidores.meta) * 100}%` }}
+                  className="h-2 rounded-full"
+                ></div>
+              </div>
+            </div>
+            <div>
+              <div className="flex justify-between mb-1">
+                <span>Aumento de Visitas Web</span>
+                <span className={calcularEstadoKPI(datos.visibilidadDigital.visitasWeb.aumentoActual, datos.visibilidadDigital.visitasWeb.meta) === 'bg-green-500' ? 'text-green-500' : 'text-yellow-500'}>
+                  {datos.visibilidadDigital.visitasWeb.aumentoActual}% de {datos.visibilidadDigital.visitasWeb.meta}%
+                </span>
+              </div>
+              <div className="w-full bg-gray-200 rounded-full h-2">
+                <div
+                  className={calcularEstadoKPI(datos.visibilidadDigital.visitasWeb.aumentoActual, datos.visibilidadDigital.visitasWeb.meta)}
+                  style={{ width: `${(datos.visibilidadDigital.visitasWeb.aumentoActual / datos.visibilidadDigital.visitasWeb.meta) * 100}%` }}
+                  className="h-2 rounded-full"
+                ></div>
+              </div>
+            </div>
+          </div>
+          <div className="mt-4">
+            <ResponsiveContainer width="100%" height={200}>
+              <LineChart data={datos.visibilidadDigital.seguidores.historico}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="mes" />
+                <YAxis />
+                <Tooltip />
+                <Line type="monotone" dataKey="valor" stroke="#3b82f6" name="% Aumento" />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        {/* Acreditación */}
+        <div className="bg-white rounded-lg shadow-md p-4">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl font-bold">Menciones de Acreditación</h2>
+            <Award size={20} className="text-yellow-500" />
+          </div>
+          <div className="mb-4">
+            <div className="flex justify-between mb-1">
+              <span>Porcentaje General</span>
+              <span className={calcularEstadoKPI(datos.acreditacion.mencionesActual, datos.acreditacion.meta) === 'bg-green-500' ? 'text-green-500' : 'text-yellow-500'}>
+                {datos.acreditacion.mencionesActual}% de {datos.acreditacion.meta}%
+              </span>
+            </div>
+            <div className="w-full bg-gray-200 rounded-full h-2">
+              <div
+                className={calcularEstadoKPI(datos.acreditacion.mencionesActual, datos.acreditacion.meta)}
+                style={{ width: `${(datos.acreditacion.mencionesActual / datos.acreditacion.meta) * 100}%` }}
+                className="h-2 rounded-full"
+              ></div>
+            </div>
+          </div>
+          <div className="mt-4">
+            <ResponsiveContainer width="100%" height={200}>
+              <BarChart data={datos.acreditacion.porCategoria}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="categoria" />
+                <YAxis />
+                <Tooltip />
+                <Bar dataKey="porcentaje" fill="#eab308" name="% Menciones" />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+      </div>
+
+      {/* Tercera fila de KPIs */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+        {/* Programas Artísticos e Inclusivos */}
+        <div className="bg-white rounded-lg shadow-md p-4">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl font-bold">Programas Artísticos e Inclusivos</h2>
+            <Palette size={20} className="text-purple-500" />
+          </div>
+          <div className="grid grid-cols-2 gap-4 mb-4">
+            <ValorNumerico 
+              valor={datos.programasArtisticos.actividadesMensuales} 
+              meta={datos.programasArtisticos.meta} 
+              titulo="Actividades Artísticas Mensuales" 
+              icono={<Palette size={16} />} 
+            />
+            <div>
+              <div className="mb-2">Niños en Programas Inclusivos</div>
+              <div className="flex justify-between mb-1">
+                <span className="text-2xl font-bold">{datos.programasArtisticos.porcentajeInclusivos}%</span>
+                <span className="text-gray-500">Meta: {datos.programasArtisticos.metaInclusivos}%</span>
+              </div>
+              <div className="w-full bg-gray-200 rounded-full h-4">
+                <div
+                  className={calcularEstadoKPI(datos.programasArtisticos.porcentajeInclusivos, datos.programasArtisticos.metaInclusivos)}
+                  style={{ width: `${(datos.programasArtisticos.porcentajeInclusivos / datos.programasArtisticos.metaInclusivos) * 100}%` }}
+                  className="h-4 rounded-full"
+                ></div>
+              </div>
+            </div>
+          </div>
+          <div className="mt-4">
+            <ResponsiveContainer width="100%" height={200}>
+              <LineChart data={datos.programasArtisticos.historico}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="mes" />
+                <YAxis />
+                <Tooltip />
+                <Legend />
+                <Line type="monotone" dataKey="actividades" stroke="#8b5cf6" name="Actividades" />
+                <Line type="monotone" dataKey="inclusivos" stroke="#ec4899" name="% Inclusivos" />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        {/* Recomendaciones */}
+        <div className="bg-white rounded-lg shadow-md p-4">
+          <h2 className="text-xl font-bold mb-4">Recomendaciones</h2>
+          <div className="space-y-4">
+            <div className="p-3 bg-yellow-50 border-l-4 border-yellow-500 rounded">
+              <p className="font-bold">Inscripciones</p>
+              <p className="text-sm">Reforzar campaña de referidos para aumentar el crecimiento de inscripciones en un 3% adicional.</p>
+            </div>
+            <div className="p-3 bg-blue-50 border-l-4 border-blue-500 rounded">
+              <p className="font-bold">Satisfacción de Padres</p>
+              <p className="text-sm">Implementar encuestas mensuales específicas para identificar áreas de mejora.</p>
+            </div>
+            <div className="p-3 bg-green-50 border-l-4 border-green-500 rounded">
+              <p className="font-bold">Visibilidad Digital</p>
+              <p className="text-sm">Mantener la frecuencia de publicaciones y reforzar contenido sobre actividades diarias.</p>
+            </div>
+            <div className="p-3 bg-red-50 border-l-4 border-red-500 rounded">
+              <p className="font-bold">Programas Artísticos</p>
+              <p className="text-sm">Urgente: Programar una actividad artística adicional para alcanzar la meta mensual.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Línea de tiempo de la campaña */}
+      <div className="bg-white rounded-lg shadow-md p-4">
+        <h2 className="text-xl font-bold mb-4">Línea de Tiempo de la Campaña</h2>
+        <div className="relative">
+          <div className="absolute left-0 inset-y-0 w-1 bg-blue-200 ml-4"></div>
+          <div className="space-y-6 relative">
+            <div className="flex">
+              <div className="bg-blue-500 rounded-full h-8 w-8 flex items-center justify-center text-white z-10">1</div>
+              <div className="ml-4 bg-blue-50 p-3 rounded-lg flex-grow">
+                <p className="font-bold">Enero 2025 - Lanzamiento</p>
+                <p className="text-sm">Inicio de campaña con renovación de imagen y materiales promocionales.</p>
+              </div>
+            </div>
+            <div className="flex">
+              <div className="bg-blue-500 rounded-full h-8 w-8 flex items-center justify-center text-white z-10">2</div>
+              <div className="ml-4 bg-blue-50 p-3 rounded-lg flex-grow">
+                <p className="font-bold">Febrero-Marzo 2025 - Expansión</p>
+                <p className="text-sm">Implementación de estrategia digital y eventos comunitarios.</p>
+              </div>
+            </div>
+            <div className="flex">
+              <div className="bg-blue-500 rounded-full h-8 w-8 flex items-center justify-center text-white z-10">3</div>
+              <div className="ml-4 bg-blue-50 p-3 rounded-lg flex-grow">
+                <p className="font-bold">Abril-Mayo 2025 - Consolidación</p>
+                <p className="text-sm">Refuerzo de comunicación sobre acreditaciones y programas inclusivos.</p>
+              </div>
+            </div>
+            <div className="flex">
+              <div className="bg-gray-300 rounded-full h-8 w-8 flex items-center justify-center text-white z-10">4</div>
+              <div className="ml-4 bg-gray-100 p-3 rounded-lg flex-grow">
+                <p className="font-bold">Junio 2025 - Evaluación Final</p>
+                <p className="text-sm">Análisis de resultados finales y planificación del segundo semestre.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <footer className="mt-8 text-center text-gray-500 text-sm">
+        <p>Dashboard actualizado al 7 de mayo de 2025</p>
+      </footer>
+    </div>
+  );
+}
